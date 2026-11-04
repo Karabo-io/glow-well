@@ -1,0 +1,16 @@
+#secret
+.env
+
+error_log
+php_errors.log
+
+# Uploads and generated exports
+/uploads/
+*.csv
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp

@@ -371,10 +371,11 @@
         }
         $when = fmt_date($r['appointment_date']) . ' at ' . fmt_time($r['start_time']);
         $lines = [
-            'confirmation' => ['GlowWell booking received', "We have received your booking for {$r['service_name']} with {$r['staff_name']} on $when. You will be notified once it is confirmed."],
-            'rescheduled' => ['GlowWell booking changed',  "Your {$r['service_name']} appointment with {$r['staff_name']} is now on $when."],
+            'confirmation' => ['GlowWell booking received', "We have received your booking for {$r['service_name']} with {$r['staff_name']} on $when. 
+                    You will be notified once it is confirmed."], 'rescheduled'  => 
+                    ['GlowWell booking changed',  "Your {$r['service_name']} appointment with {$r['staff_name']} is now on $when."],
             'cancellation' => ['GlowWell booking cancelled', "Your {$r['service_name']} appointment on $when has been cancelled."],
-            'reminder' => ['GlowWell appointment reminder', "Reminder: {$r['service_name']} with {$r['staff_name']} on $when."],
+            'reminder'     => ['GlowWell appointment reminder', "Reminder: {$r['service_name']} with {$r['staff_name']} on $when."],
         ];
         [$subject, $text] = $lines[$type];
         $body = "Hi {$r['first_name']},\r\n\r\n$text\r\n\r\nGlowWell Beauty Clinic";

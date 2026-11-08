@@ -23,7 +23,6 @@
     define('DB_USER', $env['DB_USER'] ?? 'root');
     define('DB_PASS', $env['DB_PASS'] ?? '');
 
-    
     define('BASE_URL', $env['BASE_URL'] ?? '/glowwell');
 
     // Length of one booking time-slot step, in minutes.
@@ -44,6 +43,7 @@
                         PDO::ATTR_EMULATE_PREPARES => false,
                     ]
                 );
+                
             } catch (PDOException $e) {
                 error_log('DB connection failed: ' . $e->getMessage());
                 http_response_code(500);
@@ -52,3 +52,4 @@
         }
         return $pdo;
     }
+?>

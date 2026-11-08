@@ -1,7 +1,7 @@
 <?php
     require_once __DIR__ . '/../config/db.php';
 
-    if(session_status === PHP_SESSION_NONE) {
+    if(session_status() === PHP_SESSION_NONE) {
         session_set_cookie_params(['httponly' => true, 'samesite' => "Lax"]);
         session_start();
     }
@@ -72,7 +72,7 @@
             redirect('login.php');
         }
 
-        if($roles && !in_array($_SESSION['role'], $role, true)) {
+        if($roles && !in_array($_SESSION['role'], $roles, true)) {
             flash("error", "You do not have permission to open that page.");
             redirect(home_for_role());
         }
@@ -82,13 +82,13 @@
         if($role === 'customer') {
             $sql = "SELECT CONCAT(first_name, ' ' , last_name) FROM customers WHERE user_id = ?";
         } elseif ($role === 'staff') {
-            $sql = "SELECT CONCAT(first_name, ' ', laSt_name) FROM staff WHERE user_id = ?";
+            $sql = "SELECT CONCAT(first_name, ' ', last_name) FROM staff WHERE user_id = ?";
         } else {
-            return 'Adminstrator';
+            return 'Administrator';
         }
         $st = $pdo->prepare($sql);
         $st->execute([$userId]);
-        return (string)($st->fetchColimn() ?: 'USER');
+        return (string)($st->fetchColumn() ?: 'USER');
     }
 
     function customer_id_for_user(PDO $pdo, int $userId): int {
@@ -124,7 +124,7 @@
         return strlen($v) >= 8 && preg_match('/[A-Za-z]/', $v) && preg_match('/\d/', $v);
     }
 
-    function validate_date(string $d): bool {
+    function valid_date(string $d): bool {
         $dt = DateTime::createFromFormat('Y-m-d', $d);
         return $dt && $dt->format('Y-m-d') === $d;
     }
@@ -178,6 +178,9 @@
      */
 
     function get_available_slots(PDO $pdo, int $staffId, int $serviceId, string $date, int $excludeId = 0): array {
+
+        $pdo->beginTransaction();
+        $pdo->prepare('SELECT staff_id FROM staff WHERE staff_id = ? FOR UPDATE')->execute([$staffId]);
         if (!valid_date($date)) {
             return [];
         }

@@ -43,6 +43,7 @@
                         PDO::ATTR_EMULATE_PREPARES => false,
                     ]
                 );
+                //echo "Connection successful.";
                 
             } catch (PDOException $e) {
                 error_log('DB connection failed: ' . $e->getMessage());

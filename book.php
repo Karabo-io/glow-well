@@ -14,7 +14,7 @@
         "notes" => "",
     ];
 
-    if($form['service_id'] === 0){
+    if($form['service_id'] === "0"){
         $form['service_id'] = "";
     }
 

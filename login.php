@@ -28,8 +28,8 @@
             if ($user && (int)$user['is_active'] === 1 && password_verify($password, $user['password_hash'])) {
                 session_regenerate_id(true);
                 $_SESSION['user_id'] = (int)$user['user_id'];
-                $_SESSION['role']    = $user['role'];
-                $_SESSION['name']    = load_user_name($pdo, (int)$user['user_id'], $user['role']);
+                $_SESSION['role'] = $user['role'];
+                $_SESSION['name'] = load_user_name($pdo, (int)$user['user_id'], $user['role']);
                 unset($_SESSION['fails'], $_SESSION['lock_until']);
                 flash('success', 'Welcome back, ' . $_SESSION['name'] . '!');
                 redirect(home_for_role());

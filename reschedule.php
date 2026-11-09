@@ -4,7 +4,7 @@
 
     $pdo = db();
     $customerId = customer_id_for_user($pdo, (int)$_SESSION['user_id']);
-    $id =(int)($_GET[id] ?? $_POST['appointment_id'] ?? 0);
+    $id =(int)($_GET['id'] ?? $_POST['appointment_id'] ?? 0);
 
     $st = $pdo->prepare(
         "SELECT a.*, sv.service_name, CONCAT(s.first_name, ' ', s.last_name) AS staff_name

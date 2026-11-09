@@ -26,7 +26,7 @@
             $errors[] = 'Please enter a valid date of birth.' ;
         }
         if(!valid_password($password)) {$errors[] = 'Password must be at least 8 characters and contain a letter and a number.'; }
-        if($password !== $confirm) {$errors[] = 'The two passowords do not match.'; }
+        if($password !== $confirm) {$errors[] = 'The two passwords do not match.'; }
 
         if(!$errors) {
             $st = $pdo->prepare("SELECT 1 FROM users WHERE email = ?");
@@ -51,7 +51,8 @@
             } catch (PDOException $ex) {
                 if ($pdo->inTransaction()) { $pdo->rollBack(); }
                 error_log('register: ' . $ex->getMessage());
-                $errors[] = 'We could not create your account. Please try again.';
+                $errors[] = ($ex->getCode() === '23000') ? 'An account with that email already exists.' :
+                 'We could not create your account. Please try again.'; //
             }
         }
 

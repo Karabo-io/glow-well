@@ -1,6 +1,8 @@
 <?php
     require_once __DIR__ . '/../config/db.php';
 
+    date_default_timezone_set('Africa/Johannesburg');
+
     if(session_status() === PHP_SESSION_NONE) {
         session_set_cookie_params(['httponly' => true, 'samesite' => "Lax"]);
         session_start();
@@ -179,8 +181,8 @@
 
     function get_available_slots(PDO $pdo, int $staffId, int $serviceId, string $date, int $excludeId = 0): array {
 
-        $pdo->beginTransaction();
-        $pdo->prepare('SELECT staff_id FROM staff WHERE staff_id = ? FOR UPDATE')->execute([$staffId]);
+        // $pdo->beginTransaction();
+        // $pdo->prepare('SELECT staff_id FROM staff WHERE staff_id = ? FOR UPDATE')->execute([$staffId]);
         if (!valid_date($date)) {
             return [];
         }
@@ -265,6 +267,7 @@
 
         try {
             $pdo->beginTransaction();
+            $pdo->prepare('SELECT staff_id FROM staff WHERE staff_id = ? FOR UPDATE')->execute([$staffId]); //
             if (!in_array($time, get_available_slots($pdo, $staffId, $serviceId, $date), true)) {
                 $pdo->rollBack();
                 return [false, 'Sorry, that time is not available. Please choose another slot.', 0];
@@ -322,6 +325,7 @@
 
         try {
             $pdo->beginTransaction();
+            $pdo->prepare('SELECT staff_id FROM staff WHERE staff_id = ? FOR UPDATE')->execute([$staffId]);
             if (!in_array($time, get_available_slots($pdo, $staffId, $serviceId, $date, $id), true)) {
                 $pdo->rollBack();
                 return [false, 'Sorry, that time is not available. Please choose another slot.'];

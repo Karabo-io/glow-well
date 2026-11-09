@@ -17,20 +17,20 @@
     }
 
     $page_title = "Welcome";
-    require __DIR__ . '/includes/hearder.php';
+    require __DIR__ . '/includes/header.php';
 ?>
 <section class="hero">
     <h1>Relax. Refresh. Glow</h1>
-    <p>Book facials, massasges, hair treatments and wellness sessions online in under a minute.</p>
+    <p>Book facials, massages, hair treatments and wellness sessions online in under a minute.</p>
     <?php if (($_SESSION['role'] ?? "") === 'customer'): ?>
         <a class="btn" href="<?= e(url('book.php')) ?>">Book an appointment</a>
     <?php elseif(!is_logged_in()): ?>
-        <a class="btn" href="<? e(url('register.php')) ?>">Create an account to book</a>
-        <a class="btn btn-outline" href="<? e(url('login.php'))?>">Login</a>
+        <a class="btn" href="<?= e(url('register.php')) ?>">Create an account to book</a>
+        <a class="btn btn-outline" href="<?= e(url('login.php'))?>">Login</a>
     <?php else: ?>
-        <a class="btn" href="<? e(url(home_for_role())) ?>">Go to my dashboard</a>
+        <a class="btn" href="<?= e(url(home_for_role())) ?>">Go to my dashboard</a>
     <?php endif; ?>
-<section>
+</section>
 
 <h2 id="services">Our services</h2>
 <?php if(!$grouped): ?>
@@ -47,13 +47,13 @@
                 </div>
                 <div class="service-meta">
                     <span class="price"><?= e(money($s['price'])) ?></span>
-                    <span class="muted"><?= (int)$s['duration_minutes'] ?>min</span>
+                    <span class="muted"><?= (int)$s['duration_minutes'] ?> min</span>
                 </div>
                 <?php if(($_SESSION['role'] ?? "") === 'customer'): ?>
-                    <div class="btn-row"><a class="btn btn-small" href="<? e(url('book.php?service_id=' . (int)$s['service_id'])) ?>">Book this</a></div>
+                    <div class="btn-row"><a class="btn btn-small" href="<?= e(url('book.php?service_id=' . (int)$s['service_id'])) ?>">Book this</a></div>
                 <?php endif; ?>
             </article>
         <?php endforeach; ?>
     </div>
 <?php endforeach; ?>
-<?php require __DIR__ . '/includes/footer.php' ?>
+<?php require __DIR__ . '/includes/footer.php'; ?>

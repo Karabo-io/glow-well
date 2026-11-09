@@ -23,7 +23,7 @@
     define('DB_USER', $env['DB_USER'] ?? 'root');
     define('DB_PASS', $env['DB_PASS'] ?? '');
 
-    define('BASE_URL', $env['BASE_URL'] ?? '/glowwell');
+    define('BASE_URL', rtrim($env['BASE_URL'] ?? '/glowwell', '/'));
 
     // Length of one booking time-slot step, in minutes.
     define('SLOT_STEP', 30);

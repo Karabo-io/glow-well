@@ -2,7 +2,7 @@
     //Login with hashed-password check and simple brute-force lock-out.
     require_once __DIR__ . '/includes/functions.php';
     if(is_logged_in()) {
-        redirect(home_for_role);
+        redirect(home_for_role());
     }
 
     $pdo = db();

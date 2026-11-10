@@ -52,12 +52,6 @@ sudo systemctl restart apache2
 **Windows (XAMPP)**: open `php.ini` and remove the semicolon from the start of
 `;extension=pdo_mysql` and `;extension=mbstring`, then restart Apache.
 
-**Docker (any PC)**: nothing to install. The image installs the extensions itself:
-
-```bash
-docker compose up -d --build
-```
-
 ### Check that the extensions are installed
 
 ```bash

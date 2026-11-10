@@ -13,7 +13,7 @@
     $date = (string)($_GET['date'] ?? "");
     $exclude = (int)($_GET['exclude'] ?? "");
 
-    if(!staffId || !$serviceId || !valid_date($date)) {
+    if(!$staffId || !$serviceId || !valid_date($date)) {
         http_response_code(400);
         echo json_encode(['error' => 'Invalid parameters.', 'slots' => []]);
         exit;

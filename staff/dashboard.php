@@ -4,35 +4,69 @@
 
     $pdo = db();
     $staffId = staff_id_for_user($pdo, (int)$_SESSION['user_id']);
+    $today = date('Y-m-d');
 
-    if($_SERVER['REQUEST_METHOD'] === 'POST' && post('action') === 'status') {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && post('action') === 'status') {
         csrf_check();
 
         $id = (int)post('appointment_id');
         $new = post('status');
-        
-        if(!in_array($new, ['confirmed', 'completed', 'no_show'], true)) {
-            flash('error', 'Invalid status.');
-        } else {
-            $st = $pdo->prepare("UPDATE appointments SET status = ? WHERE appointment_id = ? AND staff_id = ? AND status <> 'cancelled");
-            $st->execute([$new, $id, $staffId]);
-            flash($st->rowCount() ? 'success' : 'error', set->rowCount() ? 'Appointment updated.' : 'That appointment could not be updated.');
-        }
+        $method = post('method');
 
+        $st = $pdo->prepare('SELECT status, appointment_date, price_charged FROM appointments WHERE appointment_id = ? AND staff_id = ?');
+        $st->execute([$id, $staffId]);
+        $appt = $st->fetch();
+
+        if (!$appt) {
+            flash('error', 'That appointment could not be found.');
+        } elseif (!in_array($new, ['confirmed', 'completed', 'no_show'], true)) {
+            flash('error', 'Invalid status.');
+        } elseif ($new === 'confirmed' && $appt['status'] !== 'pending') {
+            flash('error', 'Only pending appointments can be confirmed.');
+        } elseif (!in_array($appt['status'], ['pending', 'confirmed'], true)) {
+            flash('error', 'This appointment is already closed and can only be changed by an administrator.');
+        } elseif ($new !== 'confirmed' && $appt['appointment_date'] > $today) {
+            flash('error', 'An appointment cannot be completed or marked as a no-show before its day.');
+        } elseif ($new === 'completed' && !in_array($method, ['cash', 'card', 'eft'], true)) {
+            flash('error', 'Please choose how the customer paid.');
+        } else {
+            try {
+                $pdo->beginTransaction();
+                $up = $pdo->prepare("UPDATE appointments SET status = ? WHERE appointment_id = ? AND staff_id = ? AND status IN ('pending','confirmed')");
+                $up->execute([$new, $id, $staffId]);
+                if ($up->rowCount() === 0) {
+                    $pdo->rollBack();
+                    flash('error', 'That appointment was just changed by someone else. Please refresh.');
+                } else {
+                    if ($new === 'completed') {
+                        $pdo->prepare('INSERT INTO payments (appointment_id, amount, method) VALUES (?, ?, ?)')
+                            ->execute([$id, $appt['price_charged'], $method]);
+                    }
+                    $pdo->commit();
+                    flash('success', 'Appointment updated.');
+                }
+            } catch (PDOException $ex) {
+                if ($pdo->inTransaction()) { $pdo->rollBack(); }
+                error_log('staff status: ' . $ex->getMessage());
+                flash('error', 'Could not update the appointment. Please try again.');
+            }
+        }
         redirect('staff/dashboard.php');
     }
 
+    // Upcoming 14 days, plus any past booking that still needs a final status
     $st = $pdo->prepare(
-        "SELECT a.appointment_id, a.appintment_date, a.start_time, a.end_time, a.status, a.notes,
+        "SELECT a.appointment_id, a.appointment_date, a.start_time, a.end_time, a.status, a.notes,
                 sv.service_name, CONCAT(c.first_name, ' ', c.last_name) AS customer, c.phone
         FROM appointments a
         JOIN services sv ON sv.service_id = a.service_id
         JOIN customers c ON c.customer_id = a.customer_id
-        WHERE a.staff_id = ? AND a.appointment_date BETWEEN ? AND ? AND a.status <> 'cancelled'
+        WHERE a.staff_id = ? AND a.status <> 'cancelled'
+          AND ((a.appointment_date BETWEEN ? AND ?)
+               OR (a.appointment_date < ? AND a.status IN ('pending','confirmed')))
         ORDER BY a.appointment_date, a.start_time"
     );
-
-    $st->execute([staffId, date('Y-m-d', strtotime('+14 days'))]);
+    $st->execute([$staffId, $today, date('Y-m-d', strtotime('+14 days')), $today]);
     $appts = $st->fetchAll();
 
     $st = $pdo->prepare('SELECT day_of_week, start_time, end_time FROM staff_schedules WHERE staff_id = ? ORDER BY day_of_week');

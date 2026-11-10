@@ -6,53 +6,78 @@
     $statuses = ['pending', 'confirmed', 'completed', 'cancelled', 'no_show'];
 
     function has_payment(PDO $pdo, int $appointmentId): bool {
-        $st = $pdo->prepare("SELECT 1 FROM payments WHERE appointment_id = ?");
+        $st = $pdo->prepare('SELECT 1 FROM payments WHERE appointment_id = ?');
         $st->execute([$appointmentId]);
         return (bool)$st->fetchColumn();
     }
 
-    if($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         csrf_check();
 
         $action = post('action');
         $id = (int)post('appointment_id');
 
-        if($action === 'status') {
+        $st = $pdo->prepare('SELECT status FROM appointments WHERE appointment_id = ?');
+        $st->execute([$id]);
+        $current = $st->fetchColumn();
+
+        if ($current === false) {
+            flash('error', 'That appointment does not exist.');
+        } elseif ($action === 'status') {
             $new = post('status');
 
-            if(!in_array([$new, $statuses,true])) {
+            if (!in_array($new, $statuses, true)) {
                 flash('error', 'Invalid status selected.');
+            } elseif ($new === $current) {
+                // unchanged: do nothing, send nothing
             } elseif ($new === 'completed' && !has_payment($pdo, $id)) {
                 flash('info', 'Please record how the customer paid to complete this appointment.');
-                redirect('admin/appointments_form.php?id=' . $id . '&status=completed');
+                redirect('admin/appointment_form.php?id=' . $id . '&status=completed');
+            } elseif ($new !== 'completed' && has_payment($pdo, $id)) {
+                flash('error', 'This appointment has a payment on record, so its status cannot be changed.');
             } else {
                 try {
                     $pdo->prepare('UPDATE appointments SET status = ? WHERE appointment_id = ?')->execute([$new, $id]);
-                    if ($new === 'cancelled') { send_notification($pdo, $id, 'cancellation'); }
                     flash('success', 'Appointment status updated.');
+                    if ($new === 'cancelled') {
+                        try { send_notification($pdo, $id, 'cancellation'); }
+                        catch (Throwable $ex) { error_log('cancel notification: ' . $ex->getMessage()); }
+                    }
                 } catch (PDOException $ex) {
-                    // A cancelled booking being re-activated may clash with a newer booking of the same slot
                     flash('error', $ex->getCode() === '23000'
                         ? 'Cannot restore this booking: that time slot has since been booked by someone else.'
                         : 'Could not update the status.');
-                } 
+                }
             }
         } elseif ($action === 'delete') {
-            $pdo->prepare("DELETE FROM appointmnets WHERE appointmetn_id = ?")->execute([$id]);
-            flash('success', 'Appointment deleted.');
+            if (has_payment($pdo, $id)) {
+                flash('error', 'This appointment has a payment on record and cannot be deleted. Cancel it instead.');
+            } else {
+                try {
+                    $pdo->prepare('DELETE FROM appointments WHERE appointment_id = ?')->execute([$id]);
+                    flash('success', 'Appointment deleted.');
+                } catch (PDOException $ex) {
+                    error_log('appointment delete: ' . $ex->getMessage());
+                    flash('error', 'Could not delete the appointment.');
+                }
+            }
         }
 
-        redirect('admin/appointmetns.php?' . http_build_query(array_filter([
-            'from' => post('f_from'), 'to' => post('f_to'), 'status' => post('f_status'),
-            staff_id => post('f_staff'), 'q' => post(f_q),
-        ])));
+        $back = array_filter([
+            'from'     => post('f_from'),
+            'to'       => post('f_to'),
+            'status'   => post('f_status'),
+            'staff_id' => post('f_staff'),
+            'q'        => post('f_q'),
+        ], fn($v) => $v !== '' && $v !== '0');
+        redirect('admin/appointments.php' . ($back ? '?' . http_build_query($back) : ''));
     }
 
-    $from = (string)($_GET['from'] ?? "");
-    $to = (string)($_GET['to'] ?? "");
-    $fstatus = (string)($_GET['status'] ?? "");
-    $fstaff = (int)($_GET['staff_id'] ?? 0);
-    $q = trim((string)($_GET['q'] ?? ""));
+    $from    = (string)($_GET['from'] ?? '');
+    $to      = (string)($_GET['to'] ?? '');
+    $fStatus = (string)($_GET['status'] ?? '');
+    $fStaff  = (int)($_GET['staff_id'] ?? 0);
+    $q       = trim((string)($_GET['q'] ?? ''));
 
     $where =[];
     $params = [];

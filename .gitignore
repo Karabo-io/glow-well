@@ -1,5 +1,6 @@
 #secret
 .env
+.htaccess
 
 error_log
 php_errors.log

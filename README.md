@@ -2,7 +2,6 @@
 
 PHP / MySQL / JavaScript / CSS
 
-
 ## Installation
 1. Copy the `glowwell` folder into windows: `C:\xampp\htdocs\` linux: `/var/www/html`.
 2. Start **Apache** and **MySQL** in the XAMPP Control Panel.
